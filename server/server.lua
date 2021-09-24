@@ -2,6 +2,15 @@ ESX = nil
 
 TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 
+RegisterCommand("getcoords", function(source)
+   local xPlayer = ESX.GetPlayerFromId(source)
+
+   if (xPlayer ~= nil) then
+     print(xPlayer.getCoords(true))    
+   end
+end)
+
+
 RegisterNetEvent('esx:busjob_confirmPay')
 AddEventHandler('esx:busjob_confirmPay', function(source)
     local xPlayer = ESX.GetPlayerFromId(source)

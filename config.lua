@@ -1,5 +1,5 @@
 Config = {}
-Config.Locale                     = 'en'
+Config.Locale                     = 'de'
 Config.BusHash                    = 'Coach'
 Config.Blip = {
   color   = 40,
@@ -17,22 +17,25 @@ Config.Price = 5000
 Config.BusJob = {
   {
     DutyPos = {
-      {x=-1070.91, y=-2003.52, z=15.79},
+      {x=436.7, y=-626.1, z=28.7},
     },  
     VehicleSpawn = {
-      {x=-1070.38, y=-2012.15, z=13.16}
+      {x=459.4, y=-594.5, z=28.5}
     },
     FinishPos = {
       {x=695.5, y=626.46, z=128.91}
     },
     FinalPos = {
-      {x=-1065.24, y=-2034.47, z=13.04}
+      {x=468.9, y=-629.2, z=28.5}
     },
     SpawnBus = {
       {x=-1062.2, y=-2009.21, h=134.62, z=13.99}, -- 4. Location •
       {x=-1058.45, y=-2012.96, h=134.62, z=13.99}, -- 3. Location x
       {x=-1051.18, y=-2020.21, h=134.63, z=13.99}, -- Secondary Location x
       {x=-1047.397, y=-2023.994, h=134.63, z=13.99}, -- First Location x
+    },
+    SpawnBus = {
+      {x=462.0, y=-604.8, h=215.0, z=28.5} -- First Location x
     },
   }
 }

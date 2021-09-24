@@ -4,12 +4,13 @@ games {'gta5'}
 
 author 'Cengizhan & Oguzhan'
 description 'ESX Bus Job'
-version '1.2.0'
+version '1.2.1'
 
 client_scripts {
     '@es_extended/locale.lua',
     'config.lua',
     'locales/en.lua',
+    'locales/de.lua',
     'locales/tr.lua',
     'client/main.lua'
 }
@@ -19,6 +20,7 @@ server_scripts {
     'config.lua',
 	'@mysql-async/lib/MySQL.lua',
     'locales/en.lua',
+    'locales/de.lua',
     'locales/tr.lua',
     'server/server.lua'
 }
