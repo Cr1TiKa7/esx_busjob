@@ -2,9 +2,9 @@
 fx_version 'bodacious'
 games {'gta5'}
 
-author 'Cengizhan & Oguzhan'
-description 'ESX Bus Job'
-version '1.2.1'
+author 'Cr1TiKa7 base of the esx_busjob by Cengizhan & Oguzhan'
+description 'ESX Bus Job (Cr1TiKa7 adjustments)'
+version '1.3'
 
 client_scripts {
     '@es_extended/locale.lua',

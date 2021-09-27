@@ -1,6 +1,6 @@
 Config = {}
 Config.Locale                     = 'de'
-Config.BusHash                    = 'Coach'
+Config.BusHash                    = 'Bus'
 Config.Blip = {
   color   = 40,
   alpha   = 255,
@@ -13,8 +13,19 @@ Config.Blip = {
 }
 
 Config.Price = 5000
+Config.PricePerCp = true
+Config.IdleTime = 3
 
 Config.BusJob = {
+  Routes = {
+    {
+      Name = "21",
+      CheckPoints = {
+        {x=307.4, y=-765.8, z=29.2},
+        {x=114.9, y=-784.2, z=31.3},
+      }
+    }
+  },
   {
     DutyPos = {
       {x=436.7, y=-626.1, z=28.7},
@@ -29,13 +40,7 @@ Config.BusJob = {
       {x=468.9, y=-629.2, z=28.5}
     },
     SpawnBus = {
-      {x=-1062.2, y=-2009.21, h=134.62, z=13.99}, -- 4. Location •
-      {x=-1058.45, y=-2012.96, h=134.62, z=13.99}, -- 3. Location x
-      {x=-1051.18, y=-2020.21, h=134.63, z=13.99}, -- Secondary Location x
-      {x=-1047.397, y=-2023.994, h=134.63, z=13.99}, -- First Location x
-    },
-    SpawnBus = {
-      {x=462.0, y=-604.8, h=215.0, z=28.5} -- First Location x
+      {x=462.9, y=-606.1, h=215.0, z=28.5} -- First Location x
     },
   }
 }

@@ -20,9 +20,13 @@ local pedDuty       = false
 local busVehicle    = nil
 local blip          = nil
 local finishMarker  = nil
+local busBlip       = nil
 local finishBlip    = nil
 local finalBlip     = nil
-
+local isInRoute     = false
+local routeIndex    = nil
+local isDrawMarker  = false
+local markerPos     = nil
 
 AddEventHandler('playerSpawned', function()
     Citizen.CreateThread(function()
@@ -40,6 +44,7 @@ Citizen.CreateThread(function()
         TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
     end
 end)
+
 
 -- TODO: Finish Mark
 Citizen.CreateThread(function ()
@@ -83,6 +88,8 @@ Citizen.CreateThread(function ()
 
             for _, v in ipairs(Config.BusJob) do
                 for _, _v in ipairs(v.FinalPos) do
+                    
+                    SetNewWaypoint(_v.x,_v.y)
                     DrawMarker(25, _v.x, _v.y, _v.z, 0.0, 0.0, 0.0, 
                     0.0, 0.0, 0.0, 5.0, 5.0, 5.0, 
                     255, 255, 0, 200, 
@@ -93,6 +100,8 @@ Citizen.CreateThread(function ()
 
                         if IsControlPressed(0, Keys['E']) and IsPedInSpawnBus() then
                             CompleteJob()
+                        else
+                            ShowPedHelpDialog(_U('wrong_car_msg'))
                         end
                     end
                 end
@@ -109,7 +118,7 @@ Citizen.CreateThread(function()
         Citizen.Wait(0)
 		for _, v in ipairs(Config.BusJob) do
 			for _, _v in ipairs(v.DutyPos) do
-				DrawMarker(2, _v.x, _v.y, _v.z, 0.0, 0.0, 0.0, 
+                DrawMarker(2, _v.x, _v.y, _v.z, 0.0, 0.0, 0.0, 
 				0.0, 0.0, 0.0, 1.3, 1.3, 1.3, 
 				255, 255, 0, 200, 
 				true, false, 2, true, nil, nil, false)
@@ -175,6 +184,7 @@ end)
 function ShowPedBusDutyMenu()
     Citizen.Wait(120)
     ESX.UI.Menu.CloseAll()
+
     local _elements = {
         {label = _U('duty_menu_dutyon'), value = 'busjob_dutyon'},
         {label = _U('duty_menu_dutyoff'), value = 'busjob_dutyoff'},
@@ -194,12 +204,24 @@ function ShowPedBusDutyMenu()
                     ESX.ShowNotification(_U('duty_menu_already_dutyon'))
                 else -- TODO: duty on
                     pedDuty = true
+                    for _, v in ipairs(Config.BusJob) do
+                        for key, _v in ipairs(v.VehicleSpawn) do
+                            busBlip = AddBlipForCoord(_v.x, _v.y, _v.z)
+                            SetBlipSprite(busBlip, 1)
+                            SetBlipDisplay(busBlip, 2)
+                            SetBlipScale(busBlip, 0.4)
+                            SetBlipColour(busBlip,3)
+                        end
+                    end
 					JobSetUniform()
                 end
             elseif data.current.value == 'busjob_dutyoff' then
                 if CheckDuty() == false then -- TODO: already duty on error
                     ESX.ShowNotification(_U('duty_menu_already_dutyoff'))
                 else -- TODO: duty off
+                    if DoesBlipExist(busBlip) then
+                        RemoveBlip(busBlip)
+                    end 
                     ResetDuty()
 					ResetSkin()
                 end
@@ -227,7 +249,6 @@ function SpawnBusForPed()
                         if DoesEntityExist(vehicle) and IsEntityAVehicle(vehicle) then
                             Citizen.Wait(200)
                             busVehicle = vehicle
-                            TaskEnterVehicle(PlayerPedId(), vehicle, 5, -1, 2.0, 16, 0)
                             FirstDuty()             
                         end
                     end)
@@ -243,25 +264,81 @@ function SpawnBusForPed()
 end
 
 function FirstDuty()
-    return CreatePedForBus()
+    StartRoute()
 end
 
-function CreatePedForBus()
-    Citizen.CreateThread(function()
-        _npc = {}
 
-        for i=1, 9, 1 do
-            Citizen.Wait(50)
-            local rndPedHash = RandomPedHash()
-            _npc[i] = CreatePedForVehicle(busVehicle, rndPedHash, i - 1)
+Citizen.CreateThread(function()
+    local sleep = 1000
+    while true do
+        if isDrawMarker == true and markerPos ~= nil then
+            sleep = 0
+            DrawMarker(25, markerPos.x, markerPos.y, markerPos.z - 0.5, 0.0, 0.0, 0.0, 
+            0.0, 0.0, 0.0, 5.0, 5.0, 5.0, 
+            255, 255, 0, 200, 
+            true, false, 2, true, nil, nil, false)
+        else
+            sleep = 1000
         end
+        Citizen.Wait(sleep)
+    end
+end)
 
-        FinishDuty()
+function StartRoute()
+    routeIndex = math.random(1, #Config.BusJob.Routes)
+    isInRoute = true
+    local sleep = 250
+    Citizen.CreateThread(function()
+        while (true) do
+            Citizen.Wait(sleep)
+            if (isInRoute ~= nil) then
+                local firstCp = true
+                ShowPedHelpDialog(_U('route_start_msg', Config.BusJob.Routes[routeIndex].Name))
+                for _, v in ipairs(Config.BusJob.Routes[routeIndex].CheckPoints) do
+                    if firstCp == false then
+                        ShowPedHelpDialog(_U('route_next_cp_msg'))
+                    end
+                    firstCp = false
+                    SetNewWaypoint(v.x,v.y)
+                    isDrawMarker = true
+                    markerPos = v
+                    if IsControlPressed(0, Keys['E']) and IsPedInSpawnBus() then
+                        CompleteJob()
+                    else
+                        ShowPedHelpDialog(_U('wrong_car_msg'))
+                    end
+                    local nextCp = false
+                    local i = Config.IdleTime
+                    while nextCp == false do
+                        if Vdist(v.x, v.y, v.z, pedCoords.x, pedCoords.y, pedCoords.z) < 5.0 then
+                            if IsPedInSpawnBus() then
+                                i = i - 1
+                                ShowPedHelpDialog(_U('wait_cp_msg', i + 1))
+                            else
+                                ShowPedHelpDialog(_U('wrong_car_msg'))
+                            end
+                        else
+                            i = Config.IdleTime
+                        end
+                        if (i == 0) then
+                            nextCp = true
+                        end
+                        Citizen.Wait(1000)
+                    end
+                    isDrawMarker = false
+                    markerPos = nil
+                end
+                isInRoute = nil
+                ShowPedHelpDialog(_U('final_msg'))
+                finalMarker = true
+            end
+        end
     end)
 end
 
+
+
 function FinishDuty()
-    finishMarker = true
     Citizen.CreateThread(function()
 		for _, v in ipairs(Config.BusJob) do
 			for _, _v in ipairs(v.FinishPos) do
@@ -281,54 +358,29 @@ function FinishDuty()
 			end
 		end
 	end)
-
+    
     ESX.ShowNotification(_U('finish_msg'))
 end
 
 function FinishBus()
     Citizen.Wait(150)
     DisableAllControlActions(0)
-    LeavePedInVehicle()
     ResetFinish()
     FinalBus()
 end
 
-function FinalBus()
-	DeleteWaypoint()
-    finalMarker = true
-    Citizen.CreateThread(function()
-		for _, v in ipairs(Config.BusJob) do
-			for _, _v in ipairs(v.FinalPos) do
-				finalBlip = AddBlipForCoord(_v.x, _v.y, _v.z)
-				SetBlipSprite(finalBlip, 538)
-				SetBlipDisplay(finalBlip, 2)
-				SetBlipScale(finalBlip, 1.3)
-				SetBlipColour(finalBlip,0)
-				SetBlipAlpha(finalBlip, 255)
-				SetBlipAsFriendly(finalBlip,1)
-				SetBlipAsShortRange(finalBlip,0)
-				AddTextEntry('FINALBUSBLIP', _U('final_blip'))
-				BeginTextCommandSetBlipName('FINALBUSBLIP')
-				EndTextCommandSetBlipName(finalBlip)
-				SetNewWaypoint(_v.x, _v.y)
-			end
-		end
-	end)
-
-    ESX.ShowNotification(_U('final_msg'))
-end
-
 function CompleteJob()
     DeleteBus()
+    local rIndex = routeIndex
     ResetFinal()
-    TriggerServerEvent('esx:busjob_confirmPay', GetPlayerServerId(PlayerId()))
+    TriggerServerEvent('esx:busjob_confirmPay', GetPlayerServerId(PlayerId()), rIndex)
 end
 
 function ResetFinal()
     if DoesBlipExist(finalBlip) then
         RemoveBlip(finalBlip)
     end
-
+    routeIndex = nil
     finalMarker = nil
 end
 
@@ -339,13 +391,6 @@ function DeleteBus()
     end
 end
 
-function LeavePedInVehicle()
-    for _, v in pairs(_npc) do
-        if IsEntityAPed(v) then
-            DeletePed(v)
-        end
-    end
-end
 
 function ResetFinish()
     if DoesBlipExist(finishBlip) then
@@ -356,7 +401,6 @@ function ResetFinish()
 end
 
 function ResetDuty()
-	LeavePedInVehicle()
 	DeleteBus()
     ResetFinish()
 	ResetFinal()
